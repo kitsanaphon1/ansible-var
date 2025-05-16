@@ -28,13 +28,6 @@
         state: absent
         auth_source: env
 
-    - name: Delete Network Security Group
-      azure_rm_networksecuritygroup:
-        name: "{{ nsg_name }}"
-        resource_group: "{{ resource_group }}"
-        state: absent
-        auth_source: env
-
     - name: Delete Subnet
       azure_rm_subnet:
         name: "{{ subnet_name }}"
@@ -48,4 +41,11 @@
         name: "{{ vnet_name }}"
         resource_group: "{{ resource_group }}"
         state: absent
+        auth_source: env
+
+    - name: Delete Resource Group (optional)
+      azure_rm_resourcegroup:
+        name: "{{ resource_group }}"
+        state: absent
+        force_delete_nonempty: true
         auth_source: env
