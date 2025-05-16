@@ -11,7 +11,7 @@ pipeline {
   parameters {
     booleanParam(
       name: 'DESTROY_MODE',
-      defaultValue: false,
+      defaultValue: true,
       description: '✅ ไม่ติ๊ก = สร้าง VM / 🗑 ติ๊ก = ลบ VM ตาม config-dev.yaml'
     )
   }
