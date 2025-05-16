@@ -1,6 +1,15 @@
 - hosts: all
   become: true
   tasks:
+    - name: "🐾 ตรวจว่าโฟลเดอร์ docker มีอยู่บน Jenkins"
+      local_action: stat path="{{ playbook_dir }}/../docker/"
+      register: docker_path_check
+
+    - name: "🛑 Fail ถ้าไม่พบโฟลเดอร์ docker/"
+      fail:
+        msg: "❌ ไม่พบโฟลเดอร์ docker/ ที่ {{ playbook_dir }}/../docker/"
+      when: not docker_path_check.stat.exists
+
     - name: "📁 สร้างโฟลเดอร์ /docker บน VM"
       file:
         path: /home/azureuser/docker
@@ -12,6 +21,7 @@
         src: "{{ playbook_dir }}/../docker/"
         dest: /home/azureuser/
         mode: preserve
+      delegate_to: localhost
 
     - name: "🐳 Build Docker image: Api"
       shell: docker build -t webapi:latest /home/azureuser/docker/Api
