@@ -1,24 +1,17 @@
 /**
  * 🔧 Jenkins Pipeline: สร้างหรือทำลาย VM บน Azure ด้วย Ansible และ config-dev.yaml
  *
- * ✅ DESTROY_MODE = false → สร้าง VM จาก config-dev.yaml
- * ✅ DESTROY_MODE = true  → ลบ VM และทรัพยากรที่เกี่ยวข้องจาก config-dev.yaml
+ * ✅ แก้ DESTROY_MODE = "false" → เพื่อสร้าง VM
+ * ✅ แก้ DESTROY_MODE = "true"  → เพื่อลบ VM และทรัพยากรทั้งหมดตาม config
  */
 
 pipeline {
   agent { label 'ansible-agent' }
 
-  parameters {
-    booleanParam(
-      name: 'DESTROY_MODE',
-      defaultValue: false,
-      description: '✅ ไม่ติ๊ก = สร้าง VM / 🗑 ติ๊ก = ลบ VM ตาม config-dev.yaml'
-    )
-  }
-
   environment {
     SSH_KEY = "~/.ssh/id_rsa"
     ANSIBLE_ENV_PATH = "/var/lib/jenkins/ansible-azure-env"
+    DESTROY_MODE = "false" // ✅ แก้เป็น "true" เพื่อเปลี่ยนโหมดเป็นลบ
   }
 
   stages {
@@ -38,7 +31,7 @@ pipeline {
 
     stage('⚙️ Provision หรือ Destroy VM') {
       steps {
-        echo "🔎 ตรวจสอบ DESTROY_MODE: ${params.DESTROY_MODE}"
+        echo "🔎 ตรวจสอบ DESTROY_MODE = ${DESTROY_MODE}"
 
         withCredentials([
           string(credentialsId: 'AZURE_CLIENT_ID', variable: 'AZURE_CLIENT_ID'),
@@ -47,20 +40,10 @@ pipeline {
           string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'AZURE_SUBSCRIPTION_ID')
         ]) {
           script {
-            if (params.DESTROY_MODE) {
-              echo "🗑 กำลังลบ VM ตาม config-dev.yaml..."
+            if (env.DESTROY_MODE == "true") {
+              echo "🗑 ลบ VM และทรัพยากรที่เกี่ยวข้อง (จาก config-dev.yaml)..."
 
-              // ✅ คำอธิบาย:
-              // - ระบบจะโหลดค่า config จาก config-dev.yaml
-              // - แล้วใช้ลบ VM และทรัพยากรอื่น ๆ ที่เกี่ยวข้อง เช่น:
-              //   • Virtual Machine
-              //   • Network Interface (NIC)
-              //   • Public IP Address
-              //   • Network Security Group (NSG)
-              //   • Subnet และ Virtual Network (ถ้าถูกกำหนดไว้)
-              // - ทั้งหมดจะอ้างอิงจากชื่อใน config
-              // ❗ ระวัง: ถ้ามี resource ที่ใช้ชื่อนี้อยู่จริง → จะถูกลบทันที
-
+              // ✅ ใช้ config-dev.yaml เป็น source
               sh '''
                 set -ex
                 export ANSIBLE_HOST_KEY_CHECKING=False
@@ -69,7 +52,7 @@ pipeline {
                   -e "@config/config-dev.yaml"
               '''
             } else {
-              echo "🚀 กำลังสร้าง VM ตาม config-dev.yaml..."
+              echo "🚀 สร้าง VM ตาม config-dev.yaml..."
               sh '''
                 set -ex
                 export ANSIBLE_HOST_KEY_CHECKING=False
