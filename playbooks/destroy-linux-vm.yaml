@@ -1,0 +1,51 @@
+- name: Destroy Azure VM and related resources
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars_files:
+    - ../config/config-dev.yaml
+
+  tasks:
+    - name: Delete Virtual Machine
+      azure_rm_virtualmachine:
+        name: "{{ vm_name }}"
+        resource_group: "{{ resource_group }}"
+        state: absent
+        auth_source: env
+
+    - name: Delete Network Interface
+      azure_rm_networkinterface:
+        name: "{{ nic_name }}"
+        resource_group: "{{ resource_group }}"
+        state: absent
+        auth_source: env
+
+    - name: Delete Public IP
+      azure_rm_publicipaddress:
+        name: "{{ pip_name }}"
+        resource_group: "{{ resource_group }}"
+        state: absent
+        auth_source: env
+
+    - name: Delete Network Security Group
+      azure_rm_networksecuritygroup:
+        name: "{{ nsg_name }}"
+        resource_group: "{{ resource_group }}"
+        state: absent
+        auth_source: env
+
+    - name: Delete Subnet
+      azure_rm_subnet:
+        name: "{{ subnet_name }}"
+        virtual_network: "{{ vnet_name }}"
+        resource_group: "{{ resource_group }}"
+        state: absent
+        auth_source: env
+
+    - name: Delete Virtual Network
+      azure_rm_virtualnetwork:
+        name: "{{ vnet_name }}"
+        resource_group: "{{ resource_group }}"
+        state: absent
+        auth_source: env
