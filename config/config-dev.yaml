@@ -1,0 +1,15 @@
+# config/config-dev.yaml
+
+resource_group: rgDemoAuto01
+location: southeastasia
+
+vnet_name: vnetAuto01
+subnet_name: subnetAuto01
+
+pip_name: pipAuto01
+nic_name: nicAuto01
+nsg_name: nsgAuto01  # สมมุติ NSG ใหม่
+
+vm_name: vmAuto01
+vm_size: Standard_B1s
+admin_username: azureuser
