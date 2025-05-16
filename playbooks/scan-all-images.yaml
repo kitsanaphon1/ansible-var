@@ -1,0 +1,14 @@
+- hosts: all
+  become: true
+  tasks:
+    - name: ติดตั้ง Trivy ถ้ายังไม่มี
+      shell: |
+        if ! command -v trivy &>/dev/null; then
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+        fi
+
+    - name: Scan WebApiProject Image
+      shell: trivy image --severity CRITICAL,HIGH --exit-code 1 webapi:latest
+
+    - name: Scan WebAppProject Image
+      shell: trivy image --severity CRITICAL,HIGH --exit-code 1 webapp:latest

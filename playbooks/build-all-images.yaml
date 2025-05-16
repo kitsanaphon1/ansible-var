@@ -1,0 +1,20 @@
+- hosts: all
+  become: true
+  tasks:
+    - name: สร้างโฟลเดอร์สำหรับ project บน VM
+      file:
+        path: /home/azureuser/docker
+        state: directory
+        mode: '0755'
+
+    - name: Copy โฟลเดอร์ docker ไปยัง VM
+      copy:
+        src: ../docker/
+        dest: /home/azureuser/
+        mode: preserve
+
+    - name: Build WebApiProject image
+      shell: docker build -t webapi:latest /home/azureuser/docker/WebApiProject
+
+    - name: Build WebAppProject image
+      shell: docker build -t webapp:latest /home/azureuser/docker/WebAppProject
