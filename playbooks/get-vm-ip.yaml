@@ -1,0 +1,25 @@
+- name: Get Public IP of VM
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars_files:
+    - ../config/config-dev.yaml
+
+  tasks:
+    - name: Get public IP info
+      azure.azcollection.azure_rm_publicipaddress_info:
+        resource_group: "{{ resource_group }}"
+        name: "{{ pip_name }}"
+        auth_source: env
+      register: ip_info
+
+    - name: Fail if no public IP found
+      fail:
+        msg: "❌ ไม่พบ IP"
+      when: ip_info.publicipaddresses is not defined or ip_info.publicipaddresses | length == 0
+
+    - name: Save IP to file
+      copy:
+        content: "{{ ip_info.publicipaddresses[0].ip_address }}"
+        dest: "{{ lookup('env', 'WORKSPACE') | default('./') }}/vm_ip.txt"

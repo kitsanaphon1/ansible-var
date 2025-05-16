@@ -1,7 +1,7 @@
 /**
  * 🔧 Jenkins Pipeline: สร้างหรือทำลาย VM บน Azure ด้วย Ansible และ config-dev.yaml
  *
- * ✅ แก้ DESTROY_MODE = "false" → เพื่อสร้าง VM
+ * ✅ แก้ DESTROY_MODE = "false" → เพื่อสร้าง VM และดึง IP
  * ✅ แก้ DESTROY_MODE = "true"  → เพื่อลบ VM และทรัพยากรทั้งหมดตาม config
  */
 
@@ -43,26 +43,38 @@ pipeline {
             if (env.DESTROY_MODE == "true") {
               echo "🗑 ลบ VM และทรัพยากรที่เกี่ยวข้อง (จาก config-dev.yaml)..."
 
-              // ✅ ใช้ config-dev.yaml เป็น source
               sh '''
                 set -ex
-                export ANSIBLE_HOST_KEY_CHECKING=False
                 . $ANSIBLE_ENV_PATH/bin/activate
-                ansible-playbook playbooks/destroy-linux-vm.yaml \
-                  -e "@config/config-dev.yaml"
+                ansible-playbook playbooks/destroy-linux-vm.yaml -e "@config/config-dev.yaml"
               '''
             } else {
               echo "🚀 สร้าง VM ตาม config-dev.yaml..."
+
               sh '''
                 set -ex
-                export ANSIBLE_HOST_KEY_CHECKING=False
                 . $ANSIBLE_ENV_PATH/bin/activate
-                ansible-playbook playbooks/create-linux-vm.yaml \
-                  -e "@config/config-dev.yaml"
+                ansible-playbook playbooks/create-linux-vm.yaml -e "@config/config-dev.yaml"
               '''
             }
           }
         }
+      }
+    }
+
+    stage('🌐 Get Public IP') {
+      when {
+        expression { env.DESTROY_MODE == "false" }
+      }
+      steps {
+        echo "🌐 ดึง Public IP จาก Azure"
+        sh '''
+          set -ex
+          . $ANSIBLE_ENV_PATH/bin/activate
+          ansible-playbook playbooks/get-vm-ip.yaml -e "@config/config-dev.yaml"
+          echo "📄 ตรวจ vm_ip.txt:"
+          cat vm_ip.txt
+        '''
       }
     }
   }
