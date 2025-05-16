@@ -105,7 +105,7 @@ pipeline {
               . $ANSIBLE_ENV_PATH/bin/activate
               ansible-playbook -i ${ip}, \
                 -u azureuser --private-key ${SSH_KEY} \
-                playbooks/install-Docker&docker-compose.yaml
+                playbooks/install-Docker.yaml
             """
           }
         }
