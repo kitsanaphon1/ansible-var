@@ -23,8 +23,16 @@
         version: "{{ repo_branch }}"
         force: yes
 
+    - name: "📝 แสดงชื่อ image: webapi:latest"
+      debug:
+        msg: "🚀 เริ่ม Build Docker Image: webapi:latest"
+
     - name: "🐳 Build Docker image: Api"
       shell: docker build -t webapi:latest /home/azureuser/app/docker/Api
+
+    - name: "📝 แสดงชื่อ image: webapp:latest"
+      debug:
+        msg: "🚀 เริ่ม Build Docker Image: webapp:latest"
 
     - name: "🐳 Build Docker image: WebAppProject"
       shell: docker build -t webapp:latest /home/azureuser/app/docker/WebAppProject
