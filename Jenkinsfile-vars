@@ -32,7 +32,6 @@ pipeline {
     stage('⚙️ Provision หรือ Destroy VM') {
       steps {
         echo "🔎 ตรวจสอบ DESTROY_MODE = ${DESTROY_MODE}"
-
         withCredentials([
           string(credentialsId: 'AZURE_CLIENT_ID', variable: 'AZURE_CLIENT_ID'),
           string(credentialsId: 'AZURE_SECRET', variable: 'AZURE_SECRET'),
@@ -42,7 +41,6 @@ pipeline {
           script {
             if (env.DESTROY_MODE == "true") {
               echo "🗑 ลบ VM และทรัพยากรที่เกี่ยวข้อง (จาก config-dev.yaml)..."
-
               sh '''
                 set -ex
                 . $ANSIBLE_ENV_PATH/bin/activate
@@ -50,7 +48,6 @@ pipeline {
               '''
             } else {
               echo "🚀 สร้าง VM ตาม config-dev.yaml..."
-
               sh '''
                 set -ex
                 . $ANSIBLE_ENV_PATH/bin/activate
@@ -67,14 +64,21 @@ pipeline {
         expression { env.DESTROY_MODE == "false" }
       }
       steps {
-        echo "🌐 ดึง Public IP จาก Azure"
-        sh '''
-          set -ex
-          . $ANSIBLE_ENV_PATH/bin/activate
-          ansible-playbook playbooks/get-vm-ip.yaml -e "@config/config-dev.yaml"
-          echo "📄 ตรวจ vm_ip.txt:"
-          cat vm_ip.txt
-        '''
+        withCredentials([
+          string(credentialsId: 'AZURE_CLIENT_ID', variable: 'AZURE_CLIENT_ID'),
+          string(credentialsId: 'AZURE_SECRET', variable: 'AZURE_SECRET'),
+          string(credentialsId: 'AZURE_TENANT', variable: 'AZURE_TENANT'),
+          string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'AZURE_SUBSCRIPTION_ID')
+        ]) {
+          echo "🌐 ดึง Public IP จาก Azure"
+          sh '''
+            set -ex
+            . $ANSIBLE_ENV_PATH/bin/activate
+            ansible-playbook playbooks/get-vm-ip.yaml -e "@config/config-dev.yaml"
+            echo "📄 ตรวจ vm_ip.txt:"
+            cat vm_ip.txt
+          '''
+        }
       }
     }
   }
