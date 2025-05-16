@@ -31,6 +31,25 @@ pipeline {
       }
     }
 
+    stage('📡 Get Public IP จาก Azure') {
+      steps {
+        withCredentials([
+          string(credentialsId: 'AZURE_CLIENT_ID', variable: 'AZURE_CLIENT_ID'),
+          string(credentialsId: 'AZURE_SECRET', variable: 'AZURE_SECRET'),
+          string(credentialsId: 'AZURE_TENANT', variable: 'AZURE_TENANT'),
+          string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'AZURE_SUBSCRIPTION_ID')
+        ]) {
+          echo "🌐 เรียก get-vm-ip.yaml เพื่อสร้าง vm_ip.txt"
+          sh """
+            set -ex
+            export ANSIBLE_HOST_KEY_CHECKING=False
+            . $ANSIBLE_ENV_PATH/bin/activate
+            ansible-playbook playbooks/get-vm-ip.yaml -e "@config/config-dev.yaml"
+          """
+        }
+      }
+    }
+
     stage('🐳 Build Docker Images') {
       steps {
         script {
