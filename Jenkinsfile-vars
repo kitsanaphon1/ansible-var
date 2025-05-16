@@ -74,7 +74,7 @@ pipeline {
                 set -ex
                 export ANSIBLE_HOST_KEY_CHECKING=False
                 . $ANSIBLE_ENV_PATH/bin/activate
-                ansible-playbook playbooks/create-linux-vm-02.yaml \
+                ansible-playbook playbooks/create-linux-vm.yaml \
                   -e "@config/config-dev.yaml"
               '''
             }
