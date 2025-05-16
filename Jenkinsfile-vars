@@ -84,5 +84,32 @@ pipeline {
         }
       }
     }
+
+    stage('🐳 Install Docker & Docker Compose') {
+      when {
+        expression { env.DESTROY_MODE == "false" }
+      }
+      steps {
+        withCredentials([
+          string(credentialsId: 'AZURE_CLIENT_ID', variable: 'AZURE_CLIENT_ID'),
+          string(credentialsId: 'AZURE_SECRET', variable: 'AZURE_SECRET'),
+          string(credentialsId: 'AZURE_TENANT', variable: 'AZURE_TENANT'),
+          string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'AZURE_SUBSCRIPTION_ID')
+        ]) {
+          script {
+            def ip = readFile('vm_ip.txt').trim()
+            echo "🔧 ติดตั้ง Docker & Docker Compose บนเครื่อง ${ip}"
+
+            sh """
+              set -ex
+              . $ANSIBLE_ENV_PATH/bin/activate
+              ansible-playbook -i ${ip}, \
+                -u azureuser --private-key ${SSH_KEY} \
+                playbooks/Install-Docker&docker-compose.yaml
+            """
+          }
+        }
+      }
+    }
   }
 }
