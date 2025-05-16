@@ -14,6 +14,20 @@ pipeline {
       }
     }
 
+    stage('🔍 ตรวจสอบโฟลเดอร์ docker/Api') {
+      steps {
+        script {
+          echo "🔍 ตรวจว่า docker/Api มีอยู่จริงใน Jenkins workspace..."
+          sh '''
+            if [ ! -d docker/Api ]; then
+              echo "❌ ไม่พบโฟลเดอร์ docker/Api!"
+              exit 1
+            fi
+          '''
+        }
+      }
+    }
+
     stage('🐳 Build Docker Images') {
       steps {
         script {
