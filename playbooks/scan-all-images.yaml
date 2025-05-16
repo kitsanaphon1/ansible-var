@@ -1,15 +1,31 @@
-- name: "🛡 สแกน image: webapi:latest (ไม่หยุด pipeline แม้เจอช่องโหว่)"
-  shell: trivy image --severity CRITICAL,HIGH webapi:latest || true
-  register: webapi_scan
+- hosts: all
+  become: true
+  tasks:
+    - name: "🔍 ตรวจสอบว่าติดตั้ง Trivy แล้วหรือยัง"
+      shell: which trivy
+      register: trivy_check
+      ignore_errors: yes
 
-- name: "📋 แสดงผลลัพธ์ Trivy ของ webapi"
-  debug:
-    var: webapi_scan.stdout_lines
+    - name: "📦 ติดตั้ง Trivy ถ้ายังไม่มี"
+      shell: |
+        apt-get update -y
+        apt-get install -y wget
+        wget -qO /usr/local/bin/trivy https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.51.1_Linux-64bit.deb
+        dpkg -i /usr/local/bin/trivy
+      when: trivy_check.rc != 0
 
-- name: "🛡 สแกน image: webapp:latest (ไม่หยุด pipeline แม้เจอช่องโหว่)"
-  shell: trivy image --severity CRITICAL,HIGH webapp:latest || true
-  register: webapp_scan
+    - name: "🛡 สแกน image: webapi:latest (ไม่หยุด pipeline แม้เจอช่องโหว่)"
+      shell: trivy image --severity CRITICAL,HIGH webapi:latest || true
+      register: webapi_scan
 
-- name: "📋 แสดงผลลัพธ์ Trivy ของ webapp"
-  debug:
-    var: webapp_scan.stdout_lines
+    - name: "📋 แสดงผลลัพธ์ Trivy ของ webapi"
+      debug:
+        var: webapi_scan.stdout_lines
+
+    - name: "🛡 สแกน image: webapp:latest (ไม่หยุด pipeline แม้เจอช่องโหว่)"
+      shell: trivy image --severity CRITICAL,HIGH webapp:latest || true
+      register: webapp_scan
+
+    - name: "📋 แสดงผลลัพธ์ Trivy ของ webapp"
+      debug:
+        var: webapp_scan.stdout_lines
