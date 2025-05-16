@@ -2,29 +2,43 @@
   become: true
   tasks:
     - name: "🐾 ตรวจว่าโฟลเดอร์ docker มีอยู่บน Jenkins"
+      # ตรวจสอบว่า path docker/ มีอยู่จริงบน Jenkins ก่อนจะเริ่ม copy
       local_action: stat path="{{ playbook_dir }}/../docker/"
       register: docker_path_check
 
     - name: "🛑 Fail ถ้าไม่พบโฟลเดอร์ docker/"
+      # ถ้าไม่มีโฟลเดอร์ ให้ fail ทันที เพื่อไม่ให้ขั้นตอนถัดไปค้างหรือ error ภายหลัง
       fail:
         msg: "❌ ไม่พบโฟลเดอร์ docker/ ที่ {{ playbook_dir }}/../docker/"
       when: not docker_path_check.stat.exists
 
-    - name: "📁 สร้างโฟลเดอร์ /docker บน VM"
+    - name: "📁 สร้างโฟลเดอร์ /home/azureuser/docker บน VM"
+      # เตรียมโฟลเดอร์ปลายทางใน VM ให้แน่ใจก่อนที่จะทำการ copy
       file:
         path: /home/azureuser/docker
         state: directory
         mode: '0755'
 
-    - name: "📦 Copy โฟลเดอร์ docker จาก Jenkins ไปยัง VM"
+    - name: "📦 Copy โปรเจกต์ Api ไปยัง VM (เฉพาะโฟลเดอร์นี้)"
+      # Copy เฉพาะ docker/Api → เพื่อป้องกันการซ้อนโฟลเดอร์
       copy:
-        src: "{{ playbook_dir }}/../docker/"
-        dest: /home/azureuser/
+        src: "{{ playbook_dir }}/../docker/Api/"
+        dest: /home/azureuser/docker/Api/
+        mode: preserve
+      delegate_to: localhost
+
+    - name: "📦 Copy โปรเจกต์ WebAppProject ไปยัง VM"
+      # Copy docker/WebAppProject ไปยังตำแหน่งที่เหมาะสม
+      copy:
+        src: "{{ playbook_dir }}/../docker/WebAppProject/"
+        dest: /home/azureuser/docker/WebAppProject/
         mode: preserve
       delegate_to: localhost
 
     - name: "🐳 Build Docker image: Api"
+      # สั่ง build image จากโปรเจกต์ Api ที่อยู่ใน VM
       shell: docker build -t webapi:latest /home/azureuser/docker/Api
 
     - name: "🐳 Build Docker image: WebAppProject"
+      # สั่ง build image จากโปรเจกต์ WebAppProject ที่อยู่ใน VM
       shell: docker build -t webapp:latest /home/azureuser/docker/WebAppProject
