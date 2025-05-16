@@ -1,20 +1,20 @@
 - hosts: all
   become: true
   tasks:
-    - name: 📁 สร้างโฟลเดอร์ /docker บน VM
+    - name: "📁 สร้างโฟลเดอร์ /docker บน VM"
       file:
         path: /home/azureuser/docker
         state: directory
         mode: '0755'
 
-    - name: 📦 Copy โฟลเดอร์ docker จากเครื่อง Jenkins ไปยัง VM
+    - name: "📦 Copy โฟลเดอร์ docker จาก Jenkins ไปยัง VM"
       copy:
         src: "{{ playbook_dir }}/../docker/"
         dest: /home/azureuser/
         mode: preserve
 
-    - name: 🐳 Build Docker image: Api
+    - name: "🐳 Build Docker image: Api"
       shell: docker build -t webapi:latest /home/azureuser/docker/Api
 
-    - name: 🐳 Build Docker image: WebAppProject
+    - name: "🐳 Build Docker image: WebAppProject"
       shell: docker build -t webapp:latest /home/azureuser/docker/WebAppProject
