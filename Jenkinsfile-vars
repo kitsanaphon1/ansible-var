@@ -11,7 +11,7 @@ pipeline {
   environment {
     SSH_KEY = "~/.ssh/id_rsa"
     ANSIBLE_ENV_PATH = "/var/lib/jenkins/ansible-azure-env"
-    DESTROY_MODE = "true" // ✅ แก้เป็น "true" เพื่อเปลี่ยนโหมดเป็นลบ
+    DESTROY_MODE = "false" // ✅ แก้เป็น "true" เพื่อเปลี่ยนโหมดเป็นลบ
   }
 
   stages {
