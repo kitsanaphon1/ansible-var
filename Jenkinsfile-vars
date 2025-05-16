@@ -70,6 +70,9 @@ pipeline {
           string(credentialsId: 'AZURE_TENANT', variable: 'AZURE_TENANT'),
           string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'AZURE_SUBSCRIPTION_ID')
         ]) {
+          echo "🧹 ลบไฟล์ vm_ip.txt เก่า (ถ้ามี)..."
+          sh 'rm -f vm_ip.txt || true'
+
           echo "🌐 ดึง Public IP จาก Azure"
           sh '''
             set -ex
