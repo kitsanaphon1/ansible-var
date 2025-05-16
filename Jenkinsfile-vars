@@ -1,8 +1,8 @@
 /**
  * 🔧 Jenkins Pipeline: สร้างหรือทำลาย VM บน Azure ด้วย Ansible และ config-dev.yaml
  *
- * ✅ แก้ DESTROY_MODE = "false" → เพื่อสร้าง VM และดึง IP
- * ✅ แก้ DESTROY_MODE = "true"  → เพื่อลบ VM และทรัพยากรทั้งหมดตาม config
+ * ✅ DESTROY_MODE = "false" → สร้าง VM + ดึง IP + ติดตั้ง Docker
+ * ✅ DESTROY_MODE = "true"  → ลบ VM และทรัพยากรตาม config-dev.yaml
  */
 
 pipeline {
@@ -32,6 +32,7 @@ pipeline {
     stage('⚙️ Provision หรือ Destroy VM') {
       steps {
         echo "🔎 ตรวจสอบ DESTROY_MODE = ${DESTROY_MODE}"
+
         withCredentials([
           string(credentialsId: 'AZURE_CLIENT_ID', variable: 'AZURE_CLIENT_ID'),
           string(credentialsId: 'AZURE_SECRET', variable: 'AZURE_SECRET'),
@@ -40,14 +41,14 @@ pipeline {
         ]) {
           script {
             if (env.DESTROY_MODE == "true") {
-              echo "🗑 ลบ VM และทรัพยากรที่เกี่ยวข้อง (จาก config-dev.yaml)..."
+              echo "🗑 ลบ VM และทรัพยากรจาก config-dev.yaml"
               sh '''
                 set -ex
                 . $ANSIBLE_ENV_PATH/bin/activate
                 ansible-playbook playbooks/destroy-linux-vm.yaml -e "@config/config-dev.yaml"
               '''
             } else {
-              echo "🚀 สร้าง VM ตาม config-dev.yaml..."
+              echo "🚀 สร้าง VM ตาม config-dev.yaml"
               sh '''
                 set -ex
                 . $ANSIBLE_ENV_PATH/bin/activate
