@@ -2,6 +2,8 @@ pipeline {
   agent { label 'ansible-agent' }
 
   environment {
+    SSH_KEY = "/var/lib/jenkins/.ssh/id_rsa_ansible_final"   // ✅ ใช้ key ตรง
+    SSH_USER = "azureuser"                                   // ✅ ต้องตรงกับ admin_username
     ANSIBLE_ENV_PATH = "/var/lib/jenkins/ansible-azure-env"
     DESTROY_MODE = "false"
   }
@@ -83,24 +85,16 @@ pipeline {
         expression { env.DESTROY_MODE == "false" }
       }
       steps {
-        withCredentials([
-          sshUserPrivateKey(
-            credentialsId: 'ssh-ansible-agent-final',   // 👉 ตั้งชื่อ Credentials ID ให้ตรง
-            keyFileVariable: 'SSH_KEY',
-            usernameVariable: 'SSH_USER'
-          )
-        ]) {
-          script {
-            def ip = readFile('vm_ip.txt').trim()
-            echo "🔧 ติดตั้ง Docker & Docker Compose บนเครื่อง ${ip}"
+        script {
+          def ip = readFile('vm_ip.txt').trim()
+          echo "🔧 ติดตั้ง Docker & Docker Compose บนเครื่อง ${ip}"
 
-            sh """
-              set -ex
-              export ANSIBLE_HOST_KEY_CHECKING=False
-              . \$ANSIBLE_ENV_PATH/bin/activate
-              ansible-playbook -i ${ip}, -u \$SSH_USER --private-key \$SSH_KEY playbooks/install-Docker.yaml
-            """
-          }
+          sh """
+            set -ex
+            export ANSIBLE_HOST_KEY_CHECKING=False
+            . \$ANSIBLE_ENV_PATH/bin/activate
+            ansible-playbook -i ${ip}, -u \$SSH_USER --private-key \$SSH_KEY playbooks/install-Docker.yaml
+          """
         }
       }
     }
