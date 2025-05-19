@@ -4,7 +4,7 @@
   gather_facts: no
 
   vars_files:
-    - ../config/config-dev.yaml  # แก้ path ตามจริงถ้าเรียกจาก Jenkins
+    - ../config/config-dev.yaml
 
   tasks:
     - name: Ensure resource group exists
@@ -61,7 +61,7 @@
         managed_disk_type: Standard_LRS
         ssh_public_keys:
           - path: /home/{{ admin_username }}/.ssh/authorized_keys
-            key_data: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+            key_data: "{{ lookup('file', ssh_pub_key_path) }}"
         network_interfaces: "{{ nic_name }}"
         image:
           offer: 0001-com-ubuntu-server-focal
