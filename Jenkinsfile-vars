@@ -10,7 +10,7 @@ pipeline {
 
   environment {
     SSH_KEY = "~/.ssh/id_rsa"
-    SSH_PUB_KEY = "/var/lib/jenkins/.ssh/id_rsa_ansible_final.pub" // 🔑 ใช้ส่งให้ Azure VM
+    SSH_PUB_KEY = "/home/mis/.ssh/id_rsa_ansible_final.pub" // 🔑 ใช้ส่งให้ Azure VM
     ANSIBLE_ENV_PATH = "/var/lib/jenkins/ansible-azure-env"
     DESTROY_MODE = "false" // ✅ แก้เป็น "true" เพื่อเปลี่ยนโหมดเป็นลบ
   }
