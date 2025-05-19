@@ -2,8 +2,8 @@ pipeline {
   agent { label 'ansible-agent' }
 
   environment {
-    SSH_KEY = "/var/lib/jenkins/.ssh/id_rsa_ansible_final"   // ✅ ใช้ key ตรง
-    SSH_USER = "azureuser"                                   // ✅ ต้องตรงกับ admin_username
+    SSH_KEY = "/var/lib/jenkins/.ssh/id_rsa_ansible_final"    // ✅ private key ที่ Jenkins ใช้ SSH เข้า VM
+    SSH_USER = "azureuser"                                     // ✅ ต้องตรงกับ admin_username
     ANSIBLE_ENV_PATH = "/var/lib/jenkins/ansible-azure-env"
     DESTROY_MODE = "false"
   }

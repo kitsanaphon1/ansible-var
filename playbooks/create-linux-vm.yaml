@@ -61,7 +61,7 @@
         managed_disk_type: Standard_LRS
         ssh_public_keys:
           - path: /home/{{ admin_username }}/.ssh/authorized_keys
-            key_data: "{{ lookup('file', '/tmp/id_rsa_ansible_final.pub') }}"
+            key_data: "{{ lookup('file', '/home/dev/.ssh/id_rsa_ansible_final.pub') }}"
         network_interfaces: "{{ nic_name }}"
         image:
           offer: 0001-com-ubuntu-server-focal
