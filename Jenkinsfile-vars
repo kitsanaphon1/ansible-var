@@ -1,27 +1,27 @@
 pipeline {
-  agent { label 'ansible-agent' } // 👷‍♂️ ระบุให้รันบน agent ที่มี label นี้
+  agent { label 'ansible-agent' } // 👷‍♂️ รันบน Jenkins agent ที่มี label นี้
 
   environment {
-    SSH_KEY = "/var/lib/jenkins/.ssh/id_rsa_ansible_final"    // 🔐 private key ที่ Jenkins ใช้ SSH เข้า VM
-    SSH_USER = "azureuser"                                     // 👤 ชื่อผู้ใช้บน VM ที่ต้องการ SSH เข้าไป
-    ANSIBLE_ENV_PATH = "/var/lib/jenkins/ansible-azure-env"   // 📦 path ไปยัง Python Virtual Environment ของ Ansible
-    DESTROY_MODE = "false"                                     // 🧨 ถ้าเป็น "true" จะลบ VM, ถ้าเป็น "false" จะสร้าง VM
-    ANSIBLE_HOST_KEY_CHECKING = "False"                        // ✅ ปิดการตรวจสอบ SSH host key (ป้องกันปัญหา unknown fingerprint)
+    SSH_KEY = "/var/lib/jenkins/.ssh/id_rsa_ansible_final"    // 🔐 private key สำหรับ SSH เข้า VM
+    SSH_USER = "azureuser"                                     // 👤 username ที่ใช้บน VM
+    ANSIBLE_ENV_PATH = "/var/lib/jenkins/ansible-azure-env"   // 📦 path ไปยัง virtualenv ของ Ansible
+    DESTROY_MODE = "false"                                     // 🧨 "true" = ลบ VM, "false" = สร้าง VM
+    ANSIBLE_HOST_KEY_CHECKING = "False"                        // ✅ ข้าม SSH fingerprint checking
   }
 
   stages {
 
     stage('🧹 Clean Workspace') {
       steps {
-        echo "📦 ล้าง workspace เพื่อเตรียม clean build..."
-        cleanWs() // 🧽 ลบไฟล์จาก build ก่อนหน้า เพื่อให้แน่ใจว่าเป็น clean environment
+        echo "📦 ล้าง workspace เพื่อ clean build..."
+        cleanWs()
       }
     }
 
     stage('📥 Checkout Source Code') {
       steps {
-        echo "📥 ดึง source code จาก Git Repository"
-        checkout scm // 📦 ดึงโค้ดจาก Git repo ที่ผูกกับ job นี้
+        echo "📥 ดึง source code จาก Git"
+        checkout scm
       }
     }
 
@@ -35,11 +35,9 @@ pipeline {
           string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'AZURE_SUBSCRIPTION_ID')
         ]) {
           script {
-            // 🎯 เลือกว่าจะ run playbook ไหน ขึ้นกับ DESTROY_MODE
-            def playbook = env.DESTROY_MODE == "true" ? "destroy-linux-vm.yaml" : "create-linux-vm.yaml"
-            echo env.DESTROY_MODE == "true" ? "🗑 ลบ VM..." : "🚀 สร้าง VM..."
+            def playbook = env.DESTROY_MODE?.toLowerCase() == "true" ? "destroy-linux-vm.yaml" : "create-linux-vm.yaml"
+            echo playbook == "destroy-linux-vm.yaml" ? "🗑 ลบ VM..." : "🚀 สร้าง VM..."
 
-            // 🛠️ รัน playbook ที่เลือก โดย activate venv ก่อน
             sh """
               set -ex
               . $ANSIBLE_ENV_PATH/bin/activate
@@ -52,7 +50,7 @@ pipeline {
 
     stage('🌐 Get Public IP') {
       when {
-        expression { env.DESTROY_MODE?.toLowerCase() == "false" } // ✅ รันเฉพาะตอนสร้าง VM เท่านั้น
+        expression { env.DESTROY_MODE?.toLowerCase() == "false" }
       }
       steps {
         withCredentials([
@@ -64,11 +62,11 @@ pipeline {
           echo "🌐 ดึง Public IP จาก Azure"
           sh '''
             set -ex
-            rm -f vm_ip.txt || true  // 🧹 ล้างไฟล์ IP เก่า
+            rm -f vm_ip.txt || true
             . $ANSIBLE_ENV_PATH/bin/activate
             ansible-playbook playbooks/get-vm-ip.yaml -e "@config/config-dev.yaml"
-            echo "📄 ตรวจ vm_ip.txt:"
-            cat vm_ip.txt // ✅ แสดง IP ที่ได้
+            echo "✅ แสดง IP ที่ได้:"
+            cat vm_ip.txt
           '''
         }
       }
@@ -76,18 +74,17 @@ pipeline {
 
     stage('🐳 Install Docker & Docker Compose') {
       when {
-        expression { env.DESTROY_MODE?.toLowerCase() == "false" } // ✅ รันเฉพาะตอนสร้าง VM เท่านั้น
+        expression { env.DESTROY_MODE?.toLowerCase() == "false" }
       }
       steps {
         script {
           if (!fileExists('vm_ip.txt')) {
-            error "❌ ไม่พบไฟล์ vm_ip.txt" // ⚠️ หากไม่มีไฟล์ IP หยุดทันที
+            error "❌ ไม่พบไฟล์ vm_ip.txt"
           }
 
-          def ip = readFile('vm_ip.txt').trim() // 📥 อ่าน IP จากไฟล์
+          def ip = readFile('vm_ip.txt').trim()
           echo "🔧 ติดตั้ง Docker & Docker Compose บนเครื่อง ${ip}"
 
-          // 🛠️ รัน Ansible เพื่อติดตั้ง Docker บนเครื่องที่เพิ่งสร้าง
           sh """
             set -ex
             . \$ANSIBLE_ENV_PATH/bin/activate
