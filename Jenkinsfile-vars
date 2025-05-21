@@ -2,11 +2,11 @@ pipeline {
   agent { label 'ansible-agent' } // 👷‍♂️ รันบน Jenkins agent ที่มี label นี้
 
   environment {
-    SSH_KEY = "/var/lib/jenkins/.ssh/id_rsa_ansible_final"    // 🔐 private key สำหรับ SSH เข้า VM
-    SSH_USER = "azureuser"                                     // 👤 username ที่ใช้บน VM
-    ANSIBLE_ENV_PATH = "/var/lib/jenkins/ansible-azure-env"   // 📦 path ไปยัง virtualenv ของ Ansible
-    DESTROY_MODE = "false"                                     // 💨 "true" = ลบ VM, "false" = สร้าง VM
-    ANSIBLE_HOST_KEY_CHECKING = "False"                        // ✅ ข้าม SSH fingerprint checking
+    SSH_KEY = "/home/dev/.ssh/id_rsa_ansible_final"               // 🔐 private key ที่อยู่ในเครื่อง Ansible agent
+    SSH_USER = "azureuser"                                       // 👤 username ที่ใช้บน VM
+    ANSIBLE_ENV_PATH = "/var/lib/jenkins/ansible-azure-env"     // 📦 path ไปยัง virtualenv ของ Ansible
+    DESTROY_MODE = "false"                                       // 💨 "true" = ลบ VM, "false" = สร้าง VM
+    ANSIBLE_HOST_KEY_CHECKING = "False"                          // ✅ ข้าม SSH fingerprint checking
   }
 
   stages {
@@ -18,9 +18,9 @@ pipeline {
       }
     }
 
-    stage('📅 Checkout Source Code') {
+    stage('📆 Checkout Source Code') {
       steps {
-        echo "📅 ดึง source code จาก Git"
+        echo "📆 ดึง source code จาก Git"
         checkout scm
       }
     }
