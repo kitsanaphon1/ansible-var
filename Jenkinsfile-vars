@@ -2,16 +2,18 @@ pipeline {
   agent { label 'ansible-agent' }
 
   environment {
-    SSH_KEY = "/var/lib/jenkins/.ssh/id_rsa_ansible_final"    // ✅ private key ที่ Jenkins ใช้ SSH เข้า VM
-    SSH_USER = "azureuser"                                     // ✅ ต้องตรงกับ admin_username
-    ANSIBLE_ENV_PATH = "/var/lib/jenkins/ansible-azure-env"
-    DESTROY_MODE = "false"
+    SSH_KEY = "/var/lib/jenkins/.ssh/id_rsa_ansible_final"    // 🔐 private key SSH เข้า VM
+    SSH_USER = "azureuser"                                     // 👤 admin user บน VM
+    ANSIBLE_ENV_PATH = "/var/lib/jenkins/ansible-azure-env"   // 📦 Python venv
+    DESTROY_MODE = "false"                                     // 🧨 true = ลบ VM
+    ANSIBLE_HOST_KEY_CHECKING = "False"                        // ✅ ข้าม host key checking
   }
 
   stages {
+
     stage('🧹 Clean Workspace') {
       steps {
-        echo "📦 ล้าง workspace เพื่อเตรียมพื้นที่ clean build..."
+        echo "📦 ล้าง workspace เพื่อเตรียม clean build..."
         cleanWs()
       }
     }
@@ -33,23 +35,14 @@ pipeline {
           string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'AZURE_SUBSCRIPTION_ID')
         ]) {
           script {
-            if (env.DESTROY_MODE == "true") {
-              echo "🗑 ลบ VM และทรัพยากรที่เกี่ยวข้อง..."
-              sh '''
-                set -ex
-                export ANSIBLE_HOST_KEY_CHECKING=False
-                . $ANSIBLE_ENV_PATH/bin/activate
-                ansible-playbook playbooks/destroy-linux-vm.yaml -e "@config/config-dev.yaml"
-              '''
-            } else {
-              echo "🚀 สร้าง VM ตาม config-dev.yaml..."
-              sh '''
-                set -ex
-                export ANSIBLE_HOST_KEY_CHECKING=False
-                . $ANSIBLE_ENV_PATH/bin/activate
-                ansible-playbook playbooks/create-linux-vm.yaml -e "@config/config-dev.yaml"
-              '''
-            }
+            def playbook = env.DESTROY_MODE == "true" ? "destroy-linux-vm.yaml" : "create-linux-vm.yaml"
+            echo env.DESTROY_MODE == "true" ? "🗑 ลบ VM..." : "🚀 สร้าง VM..."
+
+            sh """
+              set -ex
+              . $ANSIBLE_ENV_PATH/bin/activate
+              ansible-playbook playbooks/${playbook} -e "@config/config-dev.yaml"
+            """
           }
         }
       }
@@ -70,7 +63,6 @@ pipeline {
           sh '''
             set -ex
             rm -f vm_ip.txt || true
-            export ANSIBLE_HOST_KEY_CHECKING=False
             . $ANSIBLE_ENV_PATH/bin/activate
             ansible-playbook playbooks/get-vm-ip.yaml -e "@config/config-dev.yaml"
             echo "📄 ตรวจ vm_ip.txt:"
@@ -86,12 +78,14 @@ pipeline {
       }
       steps {
         script {
+          if (!fileExists('vm_ip.txt')) {
+            error "❌ ไม่พบไฟล์ vm_ip.txt"
+          }
           def ip = readFile('vm_ip.txt').trim()
           echo "🔧 ติดตั้ง Docker & Docker Compose บนเครื่อง ${ip}"
 
           sh """
             set -ex
-            export ANSIBLE_HOST_KEY_CHECKING=False
             . \$ANSIBLE_ENV_PATH/bin/activate
             ansible-playbook -i ${ip}, -u \$SSH_USER --private-key \$SSH_KEY playbooks/install-Docker.yaml
           """
