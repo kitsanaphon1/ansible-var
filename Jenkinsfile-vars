@@ -5,7 +5,7 @@ pipeline {
     SSH_KEY = "/var/lib/jenkins/.ssh/id_rsa_ansible_final"    // 🔐 private key SSH เข้า VM
     SSH_USER = "azureuser"                                     // 👤 admin user บน VM
     ANSIBLE_ENV_PATH = "/var/lib/jenkins/ansible-azure-env"   // 📦 Python venv
-    DESTROY_MODE = "False"                                     // 🧨 true = ลบ VM
+    DESTROY_MODE = "false"                                     // 🧨 true = ลบ VM  false = สร้าง VM
     ANSIBLE_HOST_KEY_CHECKING = "False"                        // ✅ ข้าม host key checking
   }
 
